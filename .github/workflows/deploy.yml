@@ -64,11 +64,24 @@ jobs:
           echo "Checking dist/index.html..."
           if [ -f dist/index.html ]; then
             echo "✅ index.html exists"
+            echo ""
+            echo "Script tags in index.html:"
+            grep -o '<script[^>]*>' dist/index.html || echo "No script tags found"
+            echo ""
             if grep -q "type=\"module\"" dist/index.html; then
               echo "✅ Module script tag found"
-              grep "type=\"module\"" dist/index.html | head -1
+              MODULE_SCRIPT=$(grep "type=\"module\"" dist/index.html | head -1)
+              echo "Script: $MODULE_SCRIPT"
+              if echo "$MODULE_SCRIPT" | grep -q "assets/.*\.js"; then
+                echo "✅ Script points to built file (assets/*.js)"
+              else
+                echo "⚠️  Script may not point to built file"
+              fi
             else
-              echo "⚠️  No module script tag found"
+              echo "❌ No module script tag found!"
+              echo "First 1000 chars of index.html:"
+              head -c 1000 dist/index.html
+              exit 1
             fi
           else
             echo "❌ index.html not found!"
