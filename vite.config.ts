@@ -4,10 +4,28 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    // Auto-detect base path for GitHub Pages
+    // Use VITE_BASE_URL if set, otherwise auto-detect from GITHUB_REPOSITORY
+    const base = env.VITE_BASE_URL || 
+      (process.env.GITHUB_REPOSITORY 
+        ? `/${process.env.GITHUB_REPOSITORY.split('/')[1]}/` 
+        : '/');
+    
     return {
+      base: base.endsWith('/') ? base : base + '/',
       server: {
         port: 3000,
         host: '0.0.0.0',
+      },
+      build: {
+        outDir: 'dist',
+        assetsDir: 'assets',
+        sourcemap: false,
+        rollupOptions: {
+          output: {
+            manualChunks: undefined,
+          },
+        },
       },
       plugins: [react()],
       define: {
