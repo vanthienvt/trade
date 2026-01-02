@@ -7,8 +7,9 @@
     "dev": "concurrently -n \"backend,frontend\" -c \"cyan,magenta\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "vite",
-    "build": "vite build && npm run copy-404",
+    "build": "vite build && npm run copy-404 && npm run check-build",
     "copy-404": "cp 404.html dist/404.html 2>/dev/null || echo '404.html copied'",
+    "check-build": "node scripts/check-build.js || true",
     "preview": "vite preview"
   },
   "dependencies": {

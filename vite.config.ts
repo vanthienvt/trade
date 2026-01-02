@@ -5,14 +5,32 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     // Auto-detect base path for GitHub Pages
-    // Use VITE_BASE_URL if set, otherwise auto-detect from GITHUB_REPOSITORY
-    const base = env.VITE_BASE_URL || 
-      (process.env.GITHUB_REPOSITORY 
-        ? `/${process.env.GITHUB_REPOSITORY.split('/')[1]}/` 
-        : '/');
+    // Priority: VITE_BASE_URL > GITHUB_REPOSITORY > default '/'
+    let base = env.VITE_BASE_URL;
+    
+    if (!base && process.env.GITHUB_REPOSITORY) {
+      const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
+      // If repo is username.github.io, use root. Otherwise use /repo-name/
+      if (repoName && !repoName.includes('.github.io')) {
+        base = `/${repoName}/`;
+      } else {
+        base = '/';
+      }
+    }
+    
+    // Default to root if nothing set
+    if (!base) base = '/';
+    if (!base.endsWith('/')) base += '/';
+    
+    if (process.env.NODE_ENV !== 'test') {
+      console.log('🔧 Vite config:');
+      console.log('   Base path:', base);
+      console.log('   Mode:', mode);
+      console.log('   Repository:', process.env.GITHUB_REPOSITORY || 'not set');
+    }
     
     return {
-      base: base.endsWith('/') ? base : base + '/',
+      base,
       server: {
         port: 3000,
         host: '0.0.0.0',
