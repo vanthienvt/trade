@@ -39,15 +39,17 @@ export default defineConfig(({ mode }) => {
         outDir: 'dist',
         assetsDir: 'assets',
         sourcemap: false,
+        modulePreload: {
+          polyfill: true,
+        },
         rollupOptions: {
-          input: {
-            main: path.resolve(__dirname, 'index.html'),
-          },
+          input: path.resolve(__dirname, 'index.html'),
           output: {
             manualChunks: undefined,
             entryFileNames: 'assets/[name].[hash].js',
             chunkFileNames: 'assets/[name].[hash].js',
             assetFileNames: 'assets/[name].[hash].[ext]',
+            format: 'es',
           },
         },
       },
