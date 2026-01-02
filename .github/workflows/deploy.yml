@@ -48,6 +48,12 @@ jobs:
           VITE_BASE_URL: /${{ steps.repo.outputs.repository_name }}/
         run: |
           echo "Building with base: /${{ steps.repo.outputs.repository_name }}/"
+          if [ -z "${{ secrets.VITE_API_URL }}" ]; then
+            echo "⚠️  WARNING: VITE_API_URL not set. App will use fallback data."
+            echo "   To enable real data, add VITE_API_URL secret in GitHub Settings → Secrets"
+          else
+            echo "✅ Using API URL: ${{ secrets.VITE_API_URL }}"
+          fi
           npm run build
 
       - name: Copy 404.html for SPA routing

@@ -7,27 +7,73 @@ interface Props {
   onNavigate: (view: View, signal?: MarketSignal) => void;
 }
 
+// Fallback mock data when backend is not available
+const FALLBACK_SIGNAL: MarketSignal = {
+  id: 'fallback',
+  pair: 'BTC/USDT',
+  exchange: 'Binance Perp',
+  price: 64230.50,
+  change24h: 2.45,
+  type: SignalType.LONG,
+  confidence: 87,
+  timeframe: '4H',
+  timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+  summary: 'Backend API chưa được cấu hình. Vui lòng set VITE_API_URL trong GitHub Secrets để xem dữ liệu thật.'
+};
+
 const Dashboard: React.FC<Props> = ({ onNavigate }) => {
   const [signal, setSignal] = useState<MarketSignal | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setHasError(false);
       const data = await getDashboardSignal();
-      setSignal(data);
+      if (data) {
+        setSignal(data);
+        setHasError(false);
+      } else {
+        setSignal(FALLBACK_SIGNAL);
+        setHasError(true);
+      }
       setLoading(false);
     };
     fetchData();
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
+    // Only poll if we have a valid API (not localhost)
+    const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
+    const isLocalhost = apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1');
+    if (!isLocalhost) {
+      const interval = setInterval(fetchData, 60000);
+      return () => clearInterval(interval);
+    }
   }, []);
 
-  if (loading || !signal) {
+  if (loading) {
     return (
       <div className="flex flex-col w-full items-center justify-center min-h-screen">
         <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         <p className="text-text-secondary text-sm mt-4">Đang tải dữ liệu...</p>
+      </div>
+    );
+  }
+
+  if (!signal) {
+    return (
+      <div className="flex flex-col w-full items-center justify-center min-h-screen p-4">
+        <div className="text-center max-w-md">
+          <span className="material-symbols-outlined text-6xl text-warning mb-4">warning</span>
+          <h2 className="text-xl font-bold mb-2">Không thể kết nối đến Backend</h2>
+          <p className="text-text-secondary text-sm mb-4">
+            Backend API chưa được cấu hình. Để xem dữ liệu thật, vui lòng:
+          </p>
+          <div className="bg-surface rounded-lg p-4 text-left text-xs space-y-2">
+            <p>1. Deploy backend lên Vercel/Railway/Render</p>
+            <p>2. Thêm Secret trong GitHub:</p>
+            <code className="block bg-background p-2 rounded mt-2">VITE_API_URL=https://your-backend.vercel.app</code>
+          </div>
+        </div>
       </div>
     );
   }
@@ -48,9 +94,9 @@ const Dashboard: React.FC<Props> = ({ onNavigate }) => {
 
       {/* Meta Info */}
       <div className="py-2 flex items-center justify-center gap-2">
-        <div className="h-1.5 w-1.5 rounded-full bg-bullish animate-pulse"></div>
+        <div className={`h-1.5 w-1.5 rounded-full ${hasError ? 'bg-warning' : 'bg-bullish'} animate-pulse`}></div>
         <p className="text-text-secondary text-[10px] font-bold uppercase tracking-widest">
-          Cập nhật: {signal.timestamp} • Hôm nay
+          {hasError ? '⚠️ Dữ liệu mẫu' : 'Cập nhật'}: {signal.timestamp} • Hôm nay
         </p>
       </div>
 
