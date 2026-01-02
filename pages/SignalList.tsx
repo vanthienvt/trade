@@ -1,63 +1,36 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, MarketSignal, SignalType } from '../types';
+import { getSignals } from '../services/apiService';
 
 interface Props {
   onNavigate: (view: View, signal?: MarketSignal) => void;
 }
 
-const SIGNALS: MarketSignal[] = [
-  {
-    id: 'eth',
-    pair: 'ETH/USDT',
-    exchange: 'Binance Perp',
-    price: 2450.00,
-    change24h: 3.2,
-    type: SignalType.LONG,
-    confidence: 92,
-    timeframe: '1H',
-    timestamp: 'Vừa xong',
-    summary: 'Volume đột biến, phá vỡ cản trên.'
-  },
-  {
-    id: 'ada',
-    pair: 'ADA/USDT',
-    exchange: 'Binance Perp',
-    price: 0.455,
-    change24h: -1.5,
-    type: SignalType.SHORT,
-    confidence: 85,
-    timeframe: '4H',
-    timestamp: '5m trước',
-    summary: 'Mô hình nêm giảm, RSI phân kỳ.'
-  },
-  {
-    id: 'sol',
-    pair: 'SOL/USDT',
-    exchange: 'Binance Perp',
-    price: 145.20,
-    change24h: 5.2,
-    type: SignalType.LONG,
-    confidence: 88,
-    timeframe: '15m',
-    timestamp: '12m trước',
-    summary: 'Dòng tiền thông minh nhập cuộc.'
-  },
-  {
-    id: 'xrp',
-    pair: 'XRP/USDT',
-    exchange: 'Binance Perp',
-    price: 0.615,
-    change24h: 0.8,
-    type: SignalType.SHORT,
-    confidence: 79,
-    timeframe: '1D',
-    timestamp: '25m trước',
-    summary: 'Chạm kháng cự mạnh khung ngày.'
-  }
-];
-
 const SignalList: React.FC<Props> = ({ onNavigate }) => {
+  const [signals, setSignals] = useState<MarketSignal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const data = await getSignals(['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'ADAUSDT', 'XRPUSDT']);
+      setSignals(data);
+      setLoading(false);
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col w-full items-center justify-center min-h-screen">
+        <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-text-secondary text-sm mt-4">Đang tải dữ liệu...</p>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col animate-in slide-in-from-right duration-300">
       <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md px-4 py-4 flex items-center justify-between">
@@ -87,7 +60,12 @@ const SignalList: React.FC<Props> = ({ onNavigate }) => {
       </div>
 
       <div className="flex flex-col gap-4 px-4 pb-10">
-        {SIGNALS.map((signal) => (
+        {signals.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-text-secondary">Không có dữ liệu</p>
+          </div>
+        ) : (
+          signals.map((signal) => (
           <div 
             key={signal.id}
             onClick={() => onNavigate('setup', signal)}
@@ -122,7 +100,8 @@ const SignalList: React.FC<Props> = ({ onNavigate }) => {
               <p className="truncate text-[11px] font-semibold text-text-secondary">{signal.summary}</p>
             </div>
           </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

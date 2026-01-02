@@ -1,25 +1,36 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, SignalType, MarketSignal } from '../types';
+import { getDashboardSignal } from '../services/apiService';
 
 interface Props {
   onNavigate: (view: View, signal?: MarketSignal) => void;
 }
 
-const MOCK_SIGNAL: MarketSignal = {
-  id: '1',
-  pair: 'BTC/USDT',
-  exchange: 'Binance Perp',
-  price: 64230.50,
-  change24h: 2.45,
-  type: SignalType.LONG,
-  confidence: 87,
-  timeframe: '4H',
-  timestamp: '10:30 AM',
-  summary: 'AI phát hiện lực mua gom mạnh tại vùng giá hỗ trợ. Khả năng bứt phá cao.'
-};
-
 const Dashboard: React.FC<Props> = ({ onNavigate }) => {
+  const [signal, setSignal] = useState<MarketSignal | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const data = await getDashboardSignal();
+      setSignal(data);
+      setLoading(false);
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading || !signal) {
+    return (
+      <div className="flex flex-col w-full items-center justify-center min-h-screen">
+        <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-text-secondary text-sm mt-4">Đang tải dữ liệu...</p>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col w-full animate-in fade-in duration-500">
       {/* Header */}
@@ -39,35 +50,37 @@ const Dashboard: React.FC<Props> = ({ onNavigate }) => {
       <div className="py-2 flex items-center justify-center gap-2">
         <div className="h-1.5 w-1.5 rounded-full bg-bullish animate-pulse"></div>
         <p className="text-text-secondary text-[10px] font-bold uppercase tracking-widest">
-          Cập nhật: {MOCK_SIGNAL.timestamp} • Hôm nay
+          Cập nhật: {signal.timestamp} • Hôm nay
         </p>
       </div>
 
       {/* Hero Signal Card */}
-      <div className="p-4" onClick={() => onNavigate('details', MOCK_SIGNAL)}>
+      <div className="p-4" onClick={() => onNavigate('details', signal)}>
         <div className="relative overflow-hidden rounded-2xl bg-surface p-8 flex flex-col items-center text-center shadow-2xl group cursor-pointer active:scale-[0.98] transition-transform">
           <div className="absolute inset-0 bg-gradient-to-br from-[#1a2c42] to-[#10151a]"></div>
           <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary/10 rounded-full blur-3xl"></div>
           
           <div className="relative z-10 w-full flex flex-col items-center">
             <p className="text-text-secondary text-xs font-bold uppercase tracking-[0.2em] mb-3">Tín Hiệu Thị Trường</p>
-            <h1 className="text-6xl font-black text-bullish tracking-tighter mb-4">LONG</h1>
+            <h1 className="text-6xl font-black tracking-tighter mb-4" style={{ color: signal.type === SignalType.LONG ? '#10b981' : signal.type === SignalType.SHORT ? '#ef4444' : '#9dabb9' }}>
+              {signal.type}
+            </h1>
             
             <div className="w-full max-w-[240px]">
               <div className="flex justify-between text-[10px] text-text-secondary mb-1.5 font-semibold uppercase">
                 <span>Yếu</span>
-                <span className="text-white">Độ tin cậy: {MOCK_SIGNAL.confidence}%</span>
+                <span className="text-white">Độ tin cậy: {signal.confidence}%</span>
                 <span>Mạnh</span>
               </div>
               <div className="h-2 w-full bg-background rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-green-600 to-bullish shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-1000"
-                  style={{ width: `${MOCK_SIGNAL.confidence}%` }}
+                  style={{ width: `${signal.confidence}%` }}
                 ></div>
               </div>
             </div>
             
-            <p className="text-[10px] text-text-secondary mt-6 italic opacity-60">AI phân tích dựa trên dữ liệu {MOCK_SIGNAL.timeframe} timeframe</p>
+            <p className="text-[10px] text-text-secondary mt-6 italic opacity-60">AI phân tích dựa trên dữ liệu {signal.timeframe} timeframe</p>
           </div>
         </div>
       </div>
