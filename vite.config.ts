@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
           input: path.resolve(__dirname, 'index.html'),
           output: {
             manualChunks: undefined,
-            entryFileNames: 'assets/[name].[hash].js',
+            entryFileNames: 'assets/index.[hash].js',
             chunkFileNames: 'assets/[name].[hash].js',
             assetFileNames: 'assets/[name].[hash].[ext]',
             format: 'es',

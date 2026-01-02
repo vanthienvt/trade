@@ -12,12 +12,12 @@ if (!existsSync(indexHtmlPath)) {
 const indexHtml = readFileSync(indexHtmlPath, 'utf-8');
 
 // Check if script tag exists and has correct format
-const scriptTagMatch = indexHtml.match(/<script[^>]*src=["']([^"']+)["'][^>]*>/);
+const scriptTagMatch = indexHtml.match(/<script[^>]*type=["']module["'][^>]*src=["']([^"']+)["'][^>]*>/);
 const hasScript = !!scriptTagMatch;
 const scriptSrc = scriptTagMatch ? scriptTagMatch[1] : '';
 
 // Check if script points to assets (build output) not source file
-const isBuilt = scriptSrc.includes('assets/') && (scriptSrc.includes('.js') || scriptSrc.match(/assets\/index\.[a-f0-9]+\.js/));
+const isBuilt = scriptSrc.includes('assets/') && scriptSrc.includes('.js');
 const hasAbsolutePath = scriptSrc.startsWith('/') && !scriptSrc.startsWith('//');
 
 console.log('📦 Build Check:');
@@ -36,11 +36,21 @@ if (!hasScript) {
   process.exit(1);
 }
 
-if (!isBuilt && scriptSrc.includes('index.tsx')) {
-  console.error('\n❌ Script still points to source file (index.tsx)!');
-  console.error('   Vite should have transformed this to assets/index.[hash].js');
-  console.log('\nScript tag:', scriptTagMatch[0]);
+if (!hasScript) {
+  console.error('\n❌ No module script tag found in index.html!');
+  console.error('   Vite should inject a script tag during build');
   process.exit(1);
+}
+
+if (!isBuilt) {
+  console.warn('\n⚠️  Script tag may not point to built file');
+  console.warn('   Expected: assets/index.[hash].js');
+  console.warn('   Found:', scriptSrc);
+  if (scriptSrc.includes('index.tsx')) {
+    console.error('\n❌ Script still points to source file (index.tsx)!');
+    console.error('   Vite should have transformed this to assets/index.[hash].js');
+    process.exit(1);
+  }
 }
 
 console.log('\n✅ Build looks good!');
