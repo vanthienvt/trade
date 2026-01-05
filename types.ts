@@ -16,6 +16,10 @@ export interface MarketSignal {
   timeframe: string;
   timestamp: string;
   summary: string;
+  volume24h?: number;
+  rsi?: number;
+  support?: number;
+  resistance?: number;
 }
 
 export interface TradeAlert {

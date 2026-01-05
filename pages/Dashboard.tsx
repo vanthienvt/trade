@@ -7,7 +7,7 @@ interface Props {
   onNavigate: (view: View, signal?: MarketSignal) => void;
 }
 
-// Fallback mock data when backend is not available
+// Fallback mock data when API fails
 const FALLBACK_SIGNAL: MarketSignal = {
   id: 'fallback',
   pair: 'BTC/USDT',
@@ -18,7 +18,7 @@ const FALLBACK_SIGNAL: MarketSignal = {
   confidence: 87,
   timeframe: '4H',
   timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-  summary: 'Backend API chưa được cấu hình. Vui lòng set VITE_API_URL trong GitHub Secrets để xem dữ liệu thật.'
+  summary: 'Đang tải dữ liệu từ Binance...'
 };
 
 const Dashboard: React.FC<Props> = ({ onNavigate }) => {
@@ -41,13 +41,8 @@ const Dashboard: React.FC<Props> = ({ onNavigate }) => {
       setLoading(false);
     };
     fetchData();
-    // Only poll if we have a valid API (not localhost)
-    const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
-    const isLocalhost = apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1');
-    if (!isLocalhost) {
-      const interval = setInterval(fetchData, 60000);
-      return () => clearInterval(interval);
-    }
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
@@ -64,15 +59,10 @@ const Dashboard: React.FC<Props> = ({ onNavigate }) => {
       <div className="flex flex-col w-full items-center justify-center min-h-screen p-4">
         <div className="text-center max-w-md">
           <span className="material-symbols-outlined text-6xl text-warning mb-4">warning</span>
-          <h2 className="text-xl font-bold mb-2">Không thể kết nối đến Backend</h2>
+          <h2 className="text-xl font-bold mb-2">Không thể kết nối đến Binance</h2>
           <p className="text-text-secondary text-sm mb-4">
-            Backend API chưa được cấu hình. Để xem dữ liệu thật, vui lòng:
+            Vui lòng kiểm tra kết nối internet và thử lại.
           </p>
-          <div className="bg-surface rounded-lg p-4 text-left text-xs space-y-2">
-            <p>1. Deploy backend lên Vercel/Railway/Render</p>
-            <p>2. Thêm Secret trong GitHub:</p>
-            <code className="block bg-background p-2 rounded mt-2">VITE_API_URL=https://your-backend.vercel.app</code>
-          </div>
         </div>
       </div>
     );
