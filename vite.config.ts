@@ -52,8 +52,6 @@ export default defineConfig(({ mode }) => {
             format: 'es',
           },
         },
-        // Ensure base path is respected in HTML
-        base: base || '/',
         assetsInlineLimit: 0,
       },
       plugins: [react()],
