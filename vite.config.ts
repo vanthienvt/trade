@@ -52,6 +52,7 @@ export default defineConfig(({ mode }) => {
             format: 'es',
           },
         },
+        assetsInlineLimit: 0,
       },
       plugins: [react()],
       define: {
